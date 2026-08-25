@@ -1,9 +1,0 @@
-{
-  "name": "linux-shell-academy-vasp",
-  "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "test": "node --test tests/*.test.mjs",
-    "serve": "http-server . -p 8080 -c-1"
-  }
-}
