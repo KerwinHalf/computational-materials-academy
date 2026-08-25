@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>CP2K Academy · VASP Migration Edition</title>
+  <meta name="description" content="面向凝聚态、磁性、DFT+U 与 HPC 的 CP2K 交互式科研训练器" />
+  <style>
+:root{
+  --bg:#050505;
+  --panel:rgba(18,18,18,.62);
+  --panel2:rgba(11,11,11,.76);
+  --gold:#d5b36a;
+  --gold2:#f2d69a;
+  --goldDim:#7a6333;
+  --text:#f0ede6;
+  --muted:#9e998f;
+  --line:rgba(216,182,107,.19);
+  --red:#ff6b66;
+  --green:#78d7a2;
+  --shadow:0 24px 80px rgba(0,0,0,.42);
+  --radius:24px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;background:var(--bg)}
+body{margin:0;background:radial-gradient(circle at 20% 10%,#17130b 0,transparent 28%),radial-gradient(circle at 80% 40%,#110e08 0,transparent 30%),linear-gradient(160deg,#030303,#0a0908 48%,#030303);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh;overflow-x:hidden}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.ambient{position:fixed;inset:auto;border-radius:50%;filter:blur(90px);opacity:.18;pointer-events:none;z-index:0}.ambient-a{width:480px;height:480px;background:#9a711d;left:-180px;top:22vh}.ambient-b{width:420px;height:420px;background:#6c5522;right:-160px;top:60vh}.grain{position:fixed;inset:0;pointer-events:none;opacity:.045;z-index:99;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E")}
+.hero{height:100vh;position:relative;display:grid;place-items:center;overflow:hidden;z-index:2;transition:opacity .8s ease,transform .9s cubic-bezier(.2,.8,.2,1),filter .8s ease}.hero.scrolled{opacity:.07;transform:translateY(-18vh) scale(.92);filter:blur(10px);pointer-events:none}.hero canvas{position:absolute;inset:0;width:100%;height:100%}.hero-copy{position:relative;z-index:2;text-align:center;pointer-events:none}.hero-kicker,.eyebrow{letter-spacing:.25em;text-transform:uppercase;font-size:11px;color:var(--gold);font-weight:800}.hero-fallback{font-size:clamp(58px,10vw,156px);font-weight:900;letter-spacing:-.055em;color:transparent;opacity:0}.hero-copy p{color:#bdb7aa;margin-top:30vh;font-size:14px;letter-spacing:.12em}.scroll-cue{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:24px;color:#7d776d;font-size:12px}.scroll-cue span{width:22px;height:34px;border:1px solid #6c5b37;border-radius:12px;position:relative}.scroll-cue span:after{content:"";position:absolute;left:50%;top:7px;width:3px;height:7px;border-radius:4px;background:var(--gold);transform:translateX(-50%);animation:wheel 1.8s infinite}@keyframes wheel{0%{opacity:0;transform:translate(-50%,0)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,11px)}}
+.workspace{position:relative;z-index:4;max-width:1540px;margin:0 auto;padding:34px 34px 80px;display:grid;grid-template-columns:330px minmax(0,1fr);gap:26px;opacity:0;transform:translateY(90px);transition:opacity .9s ease,transform .9s cubic-bezier(.2,.8,.2,1)}.workspace.visible{opacity:1;transform:none}
+.glass,.glass-strong{border:1px solid var(--line);box-shadow:var(--shadow);backdrop-filter:blur(22px) saturate(120%);-webkit-backdrop-filter:blur(22px) saturate(120%);background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018) 28%,rgba(0,0,0,.15)),var(--panel);position:relative}.glass:before,.glass-strong:before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 1px rgba(255,255,255,.06),inset 0 0 80px rgba(208,171,89,.025)}.glass-strong{background:linear-gradient(160deg,rgba(32,28,20,.56),rgba(10,10,10,.84));backdrop-filter:blur(30px) saturate(110%)}
+.sidebar{position:sticky;top:22px;height:calc(100vh - 44px);border-radius:28px;padding:18px;overflow:hidden;display:flex;flex-direction:column}.brand-row{display:flex;gap:12px;align-items:center;padding:8px 6px 18px;border-bottom:1px solid var(--line)}.brand-mark{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;color:#101010;background:linear-gradient(145deg,var(--gold2),#a98237);font:800 18px ui-monospace,monospace;box-shadow:0 8px 30px rgba(195,151,62,.2)}.brand-row strong{display:block;font-size:14px}.brand-row small{display:block;color:var(--muted);margin-top:4px;font-size:10px;letter-spacing:.12em}.progress-wrap{display:flex;align-items:center;gap:12px;padding:17px 4px 13px}.progress-ring{--p:0deg;width:56px;height:56px;flex:0 0 56px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--gold) var(--p),rgba(255,255,255,.07) 0);position:relative}.progress-ring:before{content:"";position:absolute;width:44px;height:44px;border-radius:50%;background:#0b0b0b}.progress-ring span{z-index:1;font:700 10px ui-monospace,monospace;color:var(--gold2)}.progress-copy strong{font-size:12px;display:block}.progress-copy span{font-size:10px;color:var(--muted)}
+.search-box{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.32);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:8px 10px;margin-bottom:10px}.search-box span{color:var(--gold)}.search-box input{width:100%;background:none;border:0;outline:none;color:var(--text);font-size:12px}.chapter-nav{overflow:auto;padding-right:4px;scrollbar-width:thin;scrollbar-color:#5e4d2c transparent}.chapter-link{display:grid;grid-template-columns:32px 1fr 36px;gap:8px;align-items:center;width:100%;padding:9px 8px;margin:2px 0;border:0;background:transparent;color:#aaa59b;border-radius:12px;text-align:left;transition:.2s}.chapter-link:hover{background:rgba(255,255,255,.035);color:#ddd7cb}.chapter-link.active{background:linear-gradient(90deg,rgba(208,169,82,.17),rgba(208,169,82,.03));color:var(--gold2);box-shadow:inset 2px 0 var(--gold)}.chapter-num{font:700 10px ui-monospace,monospace;color:#6f695e}.chapter-link.active .chapter-num{color:var(--gold)}.chapter-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px}.chapter-mini{font:700 9px ui-monospace,monospace;text-align:right;color:#676157}.chapter-link.active .chapter-mini{color:#bca568}.audit-btn{margin-top:10px;border:1px solid var(--line);background:rgba(213,179,106,.06);color:#cbb582;border-radius:12px;padding:10px;font-size:11px;letter-spacing:.08em}
+.content-column{min-width:0}.topbar{border-radius:24px;padding:22px 24px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.topbar h1{font-size:clamp(22px,3vw,38px);line-height:1.05;margin:8px 0 0;letter-spacing:-.03em}.stats{display:flex;gap:10px}.stats div{min-width:72px;text-align:center;padding:10px 12px;border:1px solid rgba(255,255,255,.05);background:rgba(0,0,0,.24);border-radius:14px}.stats span{font:800 18px ui-monospace,monospace;color:var(--gold2);display:block}.stats small{font-size:9px;color:var(--muted);letter-spacing:.08em}.lesson-stack{display:grid;grid-template-columns:1.3fr .7fr;gap:16px}.lesson-card{border-radius:20px;padding:22px;min-height:120px}.lesson-card.full{grid-column:1/-1}.lesson-card h3{font-size:12px;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;margin:0 0 12px}.lesson-card p{color:#c8c3b8;line-height:1.8;font-size:14px;margin:0}.code-block{font:13px/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#050505;border:1px solid #242016;border-radius:14px;padding:13px 15px;color:#e6cf97;overflow:auto}.example-list{display:grid;gap:8px}.example-item{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.045);padding:10px 12px;border-radius:12px;font:12px ui-monospace,monospace;color:#d7d0c2}.callout{display:flex;gap:12px;align-items:flex-start}.callout-icon{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:rgba(213,179,106,.12);color:var(--gold);flex:0 0 28px}.callout.danger .callout-icon{color:#ff807b;background:rgba(255,107,102,.1)}
+.trainer{margin-top:18px;border-radius:24px;padding:24px;overflow:hidden}.trainer-head{display:flex;justify-content:space-between;align-items:flex-start}.trainer-head h2{margin:7px 0 0;font-size:23px}.question-tools{display:flex;gap:10px;align-items:center}.difficulty{font:700 9px ui-monospace,monospace;letter-spacing:.13em;padding:7px 9px;border-radius:999px;border:1px solid var(--line);color:#b8a16c}.icon-btn{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:rgba(0,0,0,.3);color:var(--gold);font-size:20px}.question-card{margin-top:18px;padding:18px 20px;border-radius:18px;background:linear-gradient(135deg,rgba(205,166,82,.1),rgba(0,0,0,.16));border:1px solid rgba(213,179,106,.18)}.question-id{font:700 9px ui-monospace,monospace;letter-spacing:.14em;color:#887653}.question-card p{font-size:16px;line-height:1.65;margin:9px 0 0}.terminal-row{display:grid;grid-template-columns:1fr 140px;gap:14px;margin-top:14px}.terminal-shell{background:#030303;border:1px solid rgba(255,255,255,.07);border-radius:18px;overflow:hidden;box-shadow:inset 0 0 40px rgba(0,0,0,.6)}.terminal-bar{height:34px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;padding:0 12px;gap:12px;font:9px ui-monospace,monospace;color:#6f6b63}.dots{display:flex;gap:5px}.dots i{display:block;width:7px;height:7px;border-radius:50%;background:#6e5c36}.dots i:nth-child(2){opacity:.65}.dots i:nth-child(3){opacity:.38}.safe-label{margin-left:auto;color:#576457}.terminal-input-row{display:flex;padding:18px}.prompt{font:800 17px ui-monospace,monospace;color:var(--gold);padding-top:2px;margin-right:10px}.terminal-input-row textarea{resize:none;overflow:hidden;min-height:56px;width:100%;background:transparent;border:0;outline:none;color:#eee8dc;font:14px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;caret-color:var(--gold)}.terminal-actions{display:flex;align-items:center;gap:8px;padding:0 12px 12px}.ghost-btn,.run-btn{border-radius:10px;padding:8px 11px;font-size:10px;letter-spacing:.06em}.ghost-btn{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:#aaa49a}.ghost-btn:disabled{opacity:.35;cursor:not-allowed}.run-btn{margin-left:auto;border:1px solid #bea05d;background:linear-gradient(135deg,#d5b36a,#967532);color:#0a0907;font-weight:900}.verdict{border-radius:18px;border:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.24);display:grid;place-content:center;text-align:center;min-height:150px;transition:.25s}.verdict span{font:900 17px ui-monospace,monospace;letter-spacing:.08em}.verdict small{font-size:9px;margin-top:5px;color:#777168}.verdict.correct{border-color:rgba(120,215,162,.4);box-shadow:inset 0 0 40px rgba(77,188,128,.08)}.verdict.correct span{color:var(--green)}.verdict.wrong{border-color:rgba(255,107,102,.4);box-shadow:inset 0 0 40px rgba(255,80,75,.06)}.verdict.wrong span{color:var(--red)}.verdict.waiting span{color:#817a6d}.feedback{margin-top:12px;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:12px 14px;color:#bcb5a8;font-size:12px;line-height:1.6;background:rgba(0,0,0,.2)}.source-disclosure{margin-top:12px;border-top:1px solid var(--line);padding-top:12px;color:#9f988d;font-size:11px}.source-disclosure summary{cursor:pointer;color:#c3ad76}.source-disclosure a{color:var(--gold2)}.footer-note{text-align:center;color:#5f5a52;font-size:10px;margin:24px}.audit-dialog{width:min(900px,90vw);max-height:84vh;color:var(--text);border-radius:26px;padding:26px}.audit-dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(8px)}.dialog-close{position:absolute;right:16px;top:14px;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#111;color:#aaa;font-size:22px}.audit-dialog h2{font-size:32px;margin:8px 0 18px}.audit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.audit-metric{padding:15px;border:1px solid var(--line);border-radius:14px;background:rgba(0,0,0,.25)}.audit-metric strong{display:block;font:800 25px ui-monospace,monospace;color:var(--gold2)}.audit-list{line-height:1.7;color:#b9b3a8}.source-list{display:grid;gap:8px}.source-row{display:flex;justify-content:space-between;gap:12px;padding:10px;border:1px solid rgba(255,255,255,.05);border-radius:12px}.source-row a{color:var(--gold2);text-decoration:none}.burst-layer{position:fixed;inset:0;pointer-events:none;z-index:120}.burst-dot{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--gold2);animation:burst .72s ease-out forwards}@keyframes burst{to{transform:translate(var(--x),var(--y)) scale(.1);opacity:0}}
+@media(max-width:1050px){.workspace{grid-template-columns:260px 1fr;padding:20px}.lesson-stack{grid-template-columns:1fr}.stats{display:none}.terminal-row{grid-template-columns:1fr}.verdict{min-height:80px}.sidebar{padding:12px}}
+@media(max-width:760px){.workspace{display:block;padding:12px}.sidebar{position:relative;top:0;height:auto;max-height:42vh;margin-bottom:14px}.topbar{padding:18px}.chapter-nav{max-height:250px}.lesson-stack{display:block}.lesson-card{margin-bottom:12px}.trainer{padding:16px}.hero-copy p{margin-top:34vh}.audit-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}.hero-fallback{opacity:1;color:#e4d0a0;text-shadow:0 0 40px rgba(206,169,85,.12)}#particleCanvas{display:none}}
+.answer-btn{border-radius:10px;padding:8px 11px;font-size:10px;letter-spacing:.06em;border:1px solid rgba(213,179,106,.38);background:linear-gradient(135deg,rgba(213,179,106,.16),rgba(213,179,106,.055));color:#e8cc8b;font-weight:800}.answer-btn:hover{background:linear-gradient(135deg,rgba(213,179,106,.24),rgba(213,179,106,.08));box-shadow:0 0 24px rgba(213,179,106,.08)}
+.goal-card{border-color:rgba(213,179,106,.28)!important;background:linear-gradient(135deg,rgba(213,179,106,.085),rgba(255,255,255,.018)),var(--panel)!important}.vasp-compare{border-left:2px solid var(--gold);padding-left:14px}.source-chip{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:7px 9px;border:1px solid var(--line);border-radius:999px;font-size:10px;color:#bca66f;text-decoration:none;background:rgba(0,0,0,.23)}
+.answer-panel{margin-top:8px}.answer-panel strong{display:block;color:#e5cb91;margin-bottom:8px}.answer-panel pre{white-space:pre-wrap;margin:0;font:13px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#f0ddb0;background:#030303;border:1px solid #2a2417;border-radius:12px;padding:12px}.compare-table{width:100%;border-collapse:collapse;font-size:12px}.compare-table th,.compare-table td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:left;vertical-align:top}.compare-table th{color:var(--gold);font-size:10px;letter-spacing:.08em}.compare-table td{color:#bdb6aa}.scope-note{padding:13px 14px;border-radius:14px;border:1px solid rgba(213,179,106,.16);background:rgba(213,179,106,.045);color:#a9a094;font-size:11px;line-height:1.7}
+@media(max-width:760px){.terminal-actions{flex-wrap:wrap}.run-btn{margin-left:0}.answer-btn{order:2}}
+
+/* Computational Materials Academy integration */
+.academy-home-link{position:fixed;left:20px;top:18px;z-index:160;text-decoration:none;color:#d7bf87;font:800 10px/1 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.12em;padding:10px 12px;border-radius:999px;border:1px solid rgba(213,179,106,.22);background:rgba(8,8,8,.48);backdrop-filter:blur(18px) saturate(120%);box-shadow:inset 0 1px rgba(255,255,255,.035),0 10px 30px rgba(0,0,0,.25);transition:.25s ease}
+.academy-home-link:hover{transform:translateY(-1px);border-color:rgba(213,179,106,.48);background:rgba(213,179,106,.09);color:#f0d99f}
+.academy-home-link:focus-visible{outline:2px solid #d5b36a;outline-offset:3px}
+@media(max-width:760px){.academy-home-link{left:12px;top:10px}}
+
+</style>
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <div class="grain"></div>
+
+  <a class="academy-home-link" href="../" aria-label="返回 Computational Materials Academy">← CMA</a>
+
+  <section id="hero" class="hero" aria-label="CP2K Academy landing">
+    <canvas id="particleCanvas" aria-hidden="true"></canvas>
+    <div class="hero-copy">
+      <div class="hero-kicker">DFT · MAGNETISM · HPC · VASP MIGRATION</div>
+      <div class="hero-fallback" aria-hidden="true">CP2K ACADEMY</div>
+      <p>不是背参数。是学会自己设计、判断、排错。</p>
+      <div class="scroll-cue"><span></span>向下滚动进入训练场</div>
+    </div>
+  </section>
+
+  <main id="workspace" class="workspace" aria-live="polite">
+    <aside class="sidebar glass-strong">
+      <div class="brand-row">
+        <div class="brand-mark">CP</div>
+        <div><strong>CP2K Academy</strong><small>VASP MIGRATION EDITION</small></div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-ring" id="progressRing"><span id="progressPercent">0%</span></div>
+        <div class="progress-copy"><strong>整体进度</strong><span id="progressText">0 / 180 题答对</span></div>
+      </div>
+      <label class="search-box"><span>⌕</span><input id="chapterSearch" type="search" placeholder="搜索章节 / 参数" autocomplete="off" /></label>
+      <nav id="chapterNav" class="chapter-nav" aria-label="课程目录"></nav>
+      <button id="auditBtn" class="audit-btn" type="button">Coverage & Sources</button>
+    </aside>
+
+    <section class="content-column">
+      <header class="topbar glass">
+        <div><div class="eyebrow">ACTIVE MODULE</div><h1 id="chapterTitle">01 · CP2K 与 VASP：先建立正确心智模型</h1></div>
+        <div class="stats">
+          <div><span id="statCorrect">0</span><small>正确</small></div>
+          <div><span id="statStreak">0</span><small>连续</small></div>
+          <div><span id="statAccuracy">0%</span><small>本章正确率</small></div>
+        </div>
+      </header>
+
+      <article id="chapterContent" class="lesson-stack"></article>
+
+      <section id="trainer" class="trainer glass">
+        <div class="trainer-head">
+          <div><div class="eyebrow">PRACTICE INPUT LAB</div><h2>随机练习</h2></div>
+          <div class="question-tools"><span id="difficultyBadge" class="difficulty">BEGINNER</span><button id="refreshQuestion" class="icon-btn" type="button" aria-label="随机换题" title="随机换题">↻</button></div>
+        </div>
+        <div class="question-card"><div class="question-id" id="questionId">CH01 / Q01</div><p id="questionPrompt">正在载入题目…</p></div>
+
+        <div class="terminal-row">
+          <div class="terminal-shell">
+            <div class="terminal-bar"><div class="dots"><i></i><i></i><i></i></div><span>cp2k-input-trainer — safe parser</span><span class="safe-label">NO EXECUTION</span></div>
+            <div class="terminal-input-row"><span class="prompt">INPUT &gt;</span><textarea id="answerInput" rows="6" spellcheck="false" autocomplete="off" aria-label="输入 CP2K 语法"></textarea></div>
+            <div class="terminal-actions">
+              <button id="hintBtn" type="button" class="ghost-btn">提示</button>
+              <button id="answerBtn" type="button" class="answer-btn">查看答案</button>
+              <button id="explainBtn" type="button" class="ghost-btn">答案解析</button>
+              <button id="checkBtn" type="button" class="run-btn">RUN / CHECK ↵</button>
+            </div>
+          </div>
+          <div id="verdict" class="verdict waiting"><span>WAITING</span><small>输入后按 Enter</small></div>
+        </div>
+
+        <div id="feedback" class="feedback" hidden></div>
+        <details id="sourceDisclosure" class="source-disclosure" hidden><summary>Source / Why this matters</summary><div id="sourceBody"></div></details>
+      </section>
+
+      <footer class="footer-note">本网站只做 CP2K 输入语法与结构模拟，不会执行任何计算。参数多不是罪，没搞清 section 就一起堆进去才是。</footer>
+    </section>
+  </main>
+
+  <dialog id="auditDialog" class="audit-dialog glass-strong">
+    <button id="closeAudit" class="dialog-close" type="button">×</button>
+    <div class="eyebrow">ROUND 1 + ROUND 2</div>
+    <h2>Coverage & Sources</h2>
+    <div id="auditContent"></div>
+  </dialog>
+
+  <div id="burstLayer" class="burst-layer" aria-hidden="true"></div>
+  <script type="module">
+const sources = {
+  input_ref:{type:'CP2K Manual',title:'Input Reference',url:'https://manual.cp2k.org/trunk/CP2K_INPUT.html'},
+  force_eval:{type:'CP2K Manual',title:'FORCE_EVAL',url:'https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL.html'},
+  dft:{type:'CP2K Manual',title:'DFT',url:'https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT.html'},
+  kind:{type:'CP2K Manual',title:'KIND',url:'https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/SUBSYS/KIND.html'},
+  basis:{type:'CP2K Methods',title:'Basis Sets',url:'https://manual.cp2k.org/trunk/methods/dft/basis_sets.html'},
+  pseudo:{type:'CP2K Methods',title:'Pseudopotentials',url:'https://manual.cp2k.org/trunk/methods/dft/pseudopotentials.html'},
+  mgrid:{type:'CP2K Manual',title:'MGRID',url:'https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/MGRID.html'},
+  scf:{type:'CP2K Manual',title:'SCF',url:'https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/SCF.html'},
+  ot:{type:'CP2K Manual',title:'OT',url:'https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/SCF/OT.html'},
+  mixing:{type:'CP2K Manual',title:'MIXING',url:'https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/SCF/MIXING.html'},
+  smear:{type:'CP2K Manual',title:'SMEAR',url:'https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/SCF/SMEAR.html'},
+  plusu:{type:'CP2K Manual',title:'DFT_PLUS_U',url:'https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/SUBSYS/KIND/DFT_PLUS_U.html'},
+  kpoints:{type:'CP2K Manual',title:'KPOINTS',url:'https://manual.cp2k.org/trunk/CP2K_INPUT/FORCE_EVAL/DFT/KPOINTS.html'},
+  kpoints_methods:{type:'CP2K Methods',title:'K-Points — feature compatibility',url:'https://manual.cp2k.org/trunk/methods/dft/k-points.html'},
+  changelog_2026:{type:'CP2K Changelog',title:'CP2K 2026.2 — DFT+U with k-points for Mulliken methods',url:'https://manual.cp2k.org/trunk/changelog.html'},
+  geo:{type:'CP2K Methods',title:'Geometry and cell optimization',url:'https://manual.cp2k.org/trunk/methods/optimization/geometry_and_cell_opt.html'},
+  geoopt:{type:'CP2K Manual',title:'GEO_OPT',url:'https://manual.cp2k.org/trunk/CP2K_INPUT/MOTION/GEO_OPT.html'},
+  cellopt:{type:'CP2K Manual',title:'CELL_OPT',url:'https://manual.cp2k.org/trunk/CP2K_INPUT/MOTION/CELL_OPT.html'},
+  restart:{type:'CP2K Methods',title:'Restarting CP2K Calculations',url:'https://manual.cp2k.org/trunk/methods/restarting.html'},
+  forum_metal:{type:'CP2K Forum case',title:'SCF convergence for metallic systems',url:'https://groups.google.com/g/cp2k/c/OQczYEVvpME'},
+  forum_tm:{type:'CP2K Forum case',title:'Hints for convergence with transition metals',url:'https://groups.google.com/g/cp2k/c/SQJVFJqovXU'},
+  forum_osc:{type:'CP2K Forum case',title:'Oscillating SCF energy behavior',url:'https://groups.google.com/g/cp2k/c/jHAkC_c4_qA/m/0-NR3WeuAQAJ'},
+  forum_u:{type:'CP2K Forum case',title:'DFT+U warnings and VASP U transfer caution',url:'https://groups.google.com/g/cp2k/c/Ai4CXFUVfOE/m/kVlFME-eAAAJ'},
+  forum_uk:{type:'CP2K Forum case',title:'OT or DFT+U for k-points',url:'https://groups.google.com/g/cp2k/c/pCFVUhIzaTQ/m/6FDvJH-fAwAJ'},
+  forum_cell:{type:'CP2K Forum case',title:'CELL_OPT convergence too slow',url:'https://groups.google.com/g/cp2k/c/ToYbohaGVVc/m/-Ts17L9ABQAJ'},
+  forum_md:{type:'CP2K Forum case',title:'Do not start MD with unconverged SCF',url:'https://groups.google.com/g/cp2k/c/2IUOxh3QldE/m/sZDr2JezAgAJ'},
+  forum_pressure:{type:'CP2K Forum case',title:'Pressure tolerance and SCF accuracy',url:'https://groups.google.com/g/cp2k/c/qXFtxnjLwEk'},
+  forum_diag:{type:'CP2K Forum case',title:'Metallic CELL_OPT with diagonalization, mixing and smearing',url:'https://groups.google.com/g/cp2k/c/AYpCRHhC5mE'}
+};
+
+const C=(id,title,goal,concept,anatomy,examples,mistake,habit,recap,sourceId,vaspCompare='')=>({id,title,goal,concept,anatomy,examples,mistake,habit,recap,sourceId,vaspCompare});
+
+const chapters = [
+C(1,'CP2K 与 VASP：先建立正确心智模型','知道 CP2K 为什么不是“换一套 INCAR”。','CP2K Quickstep 常用 GPW/GAPW：Kohn–Sham 轨道用原子中心 Gaussian 基组展开，电子密度与势再映射到实空间多重网格。它因此同时有“基组质量”和“网格精度”两条收敛轴。','&GLOBAL → &FORCE_EVAL → (&DFT + &SUBSYS) → &MOTION', ['RUN_TYPE ENERGY','METHOD QUICKSTEP','BASIS_SET DZVP-MOLOPT-GTH'], '把 VASP 的 ENCUT、POTCAR、INCAR 参数逐项机械翻译到 CP2K。','每遇到一个陌生 CP2K 参数，先问它属于哪一层：算法、基组、网格、体系、还是工作流。','CP2K 的关键不是参数更多，而是输入层级更显式。', 'basis','VASP 主要是平面波轨道；CP2K GPW 是 Gaussian 轨道 + 辅助平面波/实空间网格。'),
+C(2,'输入文件语法：section、keyword、unit','能读懂 .inp 的层级结构。','CP2K 输入由可嵌套 section 与 keyword 组成。section 用 &NAME 开始、&END NAME 结束；keyword 放在正确 section 才有意义。单位可显式写在方括号中。','&SECTION\n  KEYWORD value\n  &SUBSECTION\n  &END SUBSECTION\n&END SECTION', ['&GLOBAL\n PROJECT test\n&END GLOBAL','CUTOFF [Ry] 500','U_MINUS_J [eV] 4.0'], '只看关键词拼写，不看它究竟嵌套在哪个 section。','学 CP2K 时把“完整路径”一起记，例如 FORCE_EVAL/DFT/SCF/EPS_SCF。','CP2K 的语法错误经常不是单词错，而是层级错。', 'input_ref'),
+C(3,'GLOBAL：PROJECT 与 RUN_TYPE','会选择计算任务类型并控制项目名。','GLOBAL 定义整个计算的顶层运行方式。PROJECT 决定大量输出文件前缀；RUN_TYPE 决定是单点、几何优化、晶胞优化、MD 等。','&GLOBAL\n PROJECT name\n RUN_TYPE ENERGY|ENERGY_FORCE|GEO_OPT|CELL_OPT|MD\n&END GLOBAL', ['PROJECT FePS3','RUN_TYPE ENERGY_FORCE','RUN_TYPE GEO_OPT'], '把 GEO_OPT 写成 DFT 子节，或忘记项目名导致输出文件难以管理。','目录名、PROJECT 名和物理任务保持一致，后续 restart 会轻松很多。','GLOBAL 决定“这次 CP2K 要干什么”。', 'input_ref'),
+C(4,'FORCE_EVAL：能量与力从哪里来','理解 FORCE_EVAL 是计算方法的容器。','FORCE_EVAL 描述用什么方法计算体系能量、力和相关性质。常见 DFT 用 METHOD QUICKSTEP/QS；CELL_OPT 还需要可靠的 stress tensor。','&FORCE_EVAL\n METHOD QUICKSTEP\n STRESS_TENSOR ANALYTICAL\n ...\n&END FORCE_EVAL', ['METHOD QUICKSTEP','METHOD QS','STRESS_TENSOR ANALYTICAL'], '把 METHOD 当成 XC 泛函；它选择的是 FORCE_EVAL 方法，不是 PBE/HSE。','CELL_OPT 前确认所用方法是否支持所需应力张量。','FORCE_EVAL 是“物理引擎入口”。', 'force_eval'),
+C(5,'SUBSYS：CELL、COORD 与周期性体系','会把晶胞和原子坐标放在正确位置。','SUBSYS 描述体系本身：CELL 给晶格，COORD 给原子，KIND 给每类原子的电子结构定义。二维体系仍需明确模拟盒与周期边界。','&SUBSYS\n &CELL\n  ABC a b c\n &END CELL\n &COORD\n  ...\n &END COORD\n&END SUBSYS', ['ABC 6.0 6.0 20.0','A 6.0 0 0','V 0.0 0.0 0.0'], '把真空层问题当成一个“CP2K 自动知道”的二维设置。','先确认坐标单位、周期边界与 CELL 一致，再谈优化。','SUBSYS 定义“你在算什么东西”。', 'force_eval'),
+C(6,'KIND：元素、基组、赝势与初始磁矩','理解 KIND 不等于元素符号本身。','KIND 可以为同一元素建立不同“种类”，并分别指定 BASIS_SET、POTENTIAL、MAGNETIZATION、DFT_PLUS_U 等。这对 AFM 特别有用：同一种元素可拆成 V_up/V_dn 两个 KIND。','&KIND V_up\n ELEMENT V\n BASIS_SET ...\n POTENTIAL ...\n MAGNETIZATION 1.0\n&END KIND', ['ELEMENT V','MAGNETIZATION 1.0','BASIS_SET DZVP-MOLOPT-SR-GTH'], '想做 AFM 却只定义一个 V KIND，然后期待每个 V 自动取不同初始磁矩。','磁性构型先通过 KIND/坐标标签显式编码，再观察 SCF 是否保持或转变。','KIND 是“同类原子的电子结构模板”。', 'kind'),
+C(7,'Gaussian 基组：DZVP/TZVP 与 MOLOPT','理解 CP2K 的基组收敛不能被 CUTOFF 替代。','Quickstep 的 KS 轨道由 Gaussian 基函数展开。提高 CUTOFF 只改善密度/势的网格表示，并不会把一个 DZVP 自动变成 TZVP。基组和网格需要分别收敛。','BASIS_SET_FILE_NAME BASIS_MOLOPT\n...\nBASIS_SET DZVP-MOLOPT-GTH', ['BASIS_SET DZVP-MOLOPT-GTH','BASIS_SET TZVP-MOLOPT-GTH','BASIS_SET_FILE_NAME BASIS_MOLOPT'], '只扫描 CUTOFF 就宣布“基组收敛”。','先固定基组收敛网格，再比较基组层级；或反过来，但必须把两类误差分开。','Gaussian 基组决定轨道展开空间。', 'basis'),
+C(8,'GTH 赝势：q 数与基组匹配','会正确选择每种 KIND 的 GTH potential。','GTH 赝势去除核心电子并显式处理价电子。名称中的 qN 表示显式价电子数；基组应与该价电子配置及 XC 泛函匹配。','POTENTIAL_FILE_NAME GTH_POTENTIALS\n...\nPOTENTIAL GTH-PBE-qN', ['POTENTIAL GTH-PBE-q6','POTENTIAL_FILE_NAME GTH_POTENTIALS','POTENTIAL GTH-PBE'], '只按元素名随手挑 potential，完全不检查 q 值与基组。','把基组、赝势、XC 泛函作为一套记录到计算日志里。','赝势减少核心电子成本，但选择必须和基组/价电子配置一致。', 'pseudo'),
+C(9,'BASIS/POTENTIAL 文件与数据路径','学会区分“数据文件名”和“KIND 中具体条目”。','DFT 顶层的 BASIS_SET_FILE_NAME/POTENTIAL_FILE_NAME 告诉 CP2K 去哪些库文件搜索；KIND 中的 BASIS_SET/POTENTIAL 决定实际选哪一条。','&DFT\n BASIS_SET_FILE_NAME BASIS_MOLOPT\n POTENTIAL_FILE_NAME GTH_POTENTIALS\n&END DFT', ['BASIS_SET_FILE_NAME BASIS_MOLOPT','POTENTIAL_FILE_NAME GTH_POTENTIALS','BASIS_SET DZVP-MOLOPT-GTH'], '把 BASIS_SET_FILE_NAME 当成某个元素的基组名。','遇到“找不到 basis/potential”先检查路径和文件，再检查条目名。','文件库位置和具体条目选择是两层配置。', 'dft'),
+C(10,'GPW/GAPW：知道自己用了什么方法','理解 GPW 与 GAPW 的基本定位。','GPW 用 Gaussian 轨道与平面波辅助密度表示，是 CP2K Quickstep 的常见路线；GAPW 在原子区域引入增强处理，适合某些全电子/高精度场景但成本和设置更复杂。','&QS\n METHOD GPW\n&END QS', ['METHOD GPW','METHOD GAPW','METHOD QUICKSTEP'], '看到“PW”三个字母就把 CP2K 当纯平面波轨道程序。','方法选择先由物理需求决定，不要因为参数看起来高级就切 GAPW。','GPW 是 Gaussian 轨道 + 网格密度，不是 VASP 式纯平面波轨道。', 'basis'),
+C(11,'MGRID：CUTOFF、REL_CUTOFF、NGRIDS','会设计真正的网格收敛测试。','CUTOFF 控制最细实空间网格；REL_CUTOFF 影响 Gaussian product 被分配到哪个网格层级；二者都影响能量、力与应力，CELL_OPT 尤其敏感。','&MGRID\n CUTOFF 500\n REL_CUTOFF 60\n NGRIDS 4\n&END MGRID', ['CUTOFF [Ry] 500','REL_CUTOFF [Ry] 60','NGRIDS 4'], '把 CP2K 的 CUTOFF 当成 VASP ENCUT 一一对应。','对目标性质做收敛：能量不够，几何优化还要看力，CELL_OPT 还要看 stress。','网格收敛是 CP2K 精度控制核心之一。', 'mgrid','VASP ENCUT 与 CP2K MGRID CUTOFF 物理角色不同，不能数值照搬。'),
+C(12,'QS 与 EPS_DEFAULT：数值阈值的层级','理解“更小”意味着更严，而不是更快。','QS 中 EPS_DEFAULT 是许多数值截断的默认参考阈值。极难收敛体系有时需要更严格的数值精度，但盲目设得极小会增加成本。','&QS\n EPS_DEFAULT 1.0E-12\n&END QS', ['EPS_DEFAULT 1.0E-12','EPS_DEFAULT 1.0E-14','&QS'], '把 SCF 振荡全部归因于 MAX_SCF 太小，然后只会把 MAX_SCF 加到 1000。','先区分算法不稳、数值噪声、结构不合理、金属性，再决定收紧哪个阈值。','数值阈值要服务于误差来源诊断。', 'forum_osc'),
+C(13,'XC 泛函：PBE 只是整个 DFT 块的一部分','会把 XC 设置放在正确位置并理解方法一致性。','XC 泛函位于 FORCE_EVAL/DFT/XC。基组、赝势和文献参数往往与泛函相关；换泛函不是只改一个字符串就万事大吉。','&XC\n &XC_FUNCTIONAL PBE\n &END XC_FUNCTIONAL\n&END XC', ['&XC_FUNCTIONAL PBE','&XC','PBE'], '从 VASP 的 PBE+U 直接复制 U，却忽略 CP2K 的投影与基组定义不同。','所有跨软件对标先固定 XC、结构、磁态、基组/赝势体系，再比较。','XC 决定近似泛函，但不是唯一数值设置。', 'dft'),
+C(14,'SCF：EPS_SCF、MAX_SCF 与“真收敛”','会读 SCF 而不是只看有没有跑完。','EPS_SCF 是内层 SCF 收敛阈值；MAX_SCF 只是最多迭代次数。达到 MAX_SCF 不等于收敛。默认情况下 SCF 不满足要求会中止，除非人为忽略失败。','&SCF\n EPS_SCF 1.0E-6\n MAX_SCF 100\n&END SCF', ['EPS_SCF 1.0E-6','MAX_SCF 100','SCF_GUESS ATOMIC'], '看到跑完 MAX_SCF 就说“计算完成”。','先看电子结构是否收敛，再信任力、优化轨迹和 MD。','SCF 是所有后续力和性质的地基。', 'scf'),
+C(15,'Diagonalization：为什么金属常需要它','理解标准对角化路线和它与 mixing/smearing 的关系。','标准 diagonalization 显式求 KS 本征态，因此可配合 ADDED_MOS、SMEAR 和高级 density mixing。代价通常高于 OT，但金属/小带隙体系常需要这条路线。','&SCF\n &DIAGONALIZATION\n  ALGORITHM STANDARD\n &END DIAGONALIZATION\n&END SCF', ['ALGORITHM STANDARD','&DIAGONALIZATION','ADDED_MOS 100'], '把 diagonalization 与 OT 同时堆在输入里，期待两个算法“互相帮忙”。','金属体系优先从“需要部分占据”这一物理事实倒推算法。','Diagonalization 贵，但支持 smearing/mixing 这类金属工具。', 'forum_metal'),
+C(16,'MIXING：ALPHA、Broyden 与 charge sloshing','会用 mixing 抑制振荡而不是乱改参数。','MIXING 只对 diagonalization/线性标度 SCF 生效，不对 OT 最小化生效。ALPHA 是新密度混入比例；降低 ALPHA 往往更稳但更慢。','&MIXING\n METHOD BROYDEN_MIXING\n ALPHA 0.1\n&END MIXING', ['ALPHA 0.1','METHOD BROYDEN_MIXING','METHOD KERKER_MIXING'], 'OT 计算里继续调 MIXING，然后奇怪为什么没有效果。','每次只改一个收敛机制并记录 SCF 曲线，否则你不知道是哪一项救了它。','Mixing 是 diagonalization 路线的稳定器。', 'mixing'),
+C(17,'OT：快速、稳健，但不是万能药','知道 OT 的优势、预条件和禁区。','OT 避免昂贵的完整对角化，适合绝缘体/大体系。官方说明它依赖良好预条件；FULL_ALL + 小 ENERGY_GAP 常有效，CG 更稳，DIIS 可更快。普通 OT 不支持常规 smearing 或高级 SCF mixing。','&OT\n MINIMIZER CG\n PRECONDITIONER FULL_ALL\n ENERGY_GAP 0.001\n&END OT', ['MINIMIZER CG','PRECONDITIONER FULL_ALL','MINIMIZER DIIS'], '金属体系明明需要 smearing，却坚持 OT 只因为它快。','先判断体系是否允许 OT，再调预条件；算法适用性比“哪个更快”重要。','OT 是非常强的绝缘体/大体系 SCF 工具，但对金属不友好。', 'ot'),
+C(18,'SMEAR + ADDED_MOS：小带隙/金属的占据处理','理解 smearing 为什么需要未占据态。','SMEAR 控制费米面附近的部分占据。使用 smearing 通常需要 ADDED_MOS 提供额外轨道；Fermi-Dirac 可用电子温度，Gaussian/冷展宽则用 SIGMA。力和应力与自由能一致，结果需理解有限展宽的影响。','&SCF\n ADDED_MOS 100\n &SMEAR ON\n  METHOD FERMI_DIRAC\n  ELECTRONIC_TEMPERATURE [K] 300\n &END SMEAR\n&END SCF', ['ADDED_MOS 100','METHOD FERMI_DIRAC','ELECTRONIC_TEMPERATURE [K] 300'], '只开 SMEAR 不增加足够未占据轨道，或者对普通 OT 同时开常规 smearing。','把 smearing 当收敛工具和物理近似同时管理：扫描其大小，而不是只追求最好收敛。','金属 SCF 的核心是合理处理费米面占据。', 'smear'),
+C(19,'UKS、自旋极化与 MULTIPLICITY','会建立自旋极化计算的总自旋框架。','DFT 中 UKS 打开 unrestricted Kohn–Sham。MULTIPLICITY=2S+1 描述总自旋多重度；KIND/MAGNETIZATION 给原子初始磁化猜测。周期磁体需结合整体电子数与目标磁序检查。','&DFT\n UKS T\n MULTIPLICITY 1\n&END DFT', ['UKS T','MULTIPLICITY 3','MAGNETIZATION 1.0'], '认为 UKS T 自动等于某个 AFM 构型。','区分“总自旋约束/多重度”和“局域初始磁矩猜测”。','UKS 决定自旋自由度，磁序还要靠 KIND 与初态设计。', 'dft'),
+C(20,'AFM 初态：用 KIND 编码局域磁矩','学会在 CP2K 中显式构造反铁磁初始态。','同一元素可以拆成多个 KIND，例如 V_A/V_B，ELEMENT 都是 V，但 MAGNETIZATION 分别正负。坐标里用 KIND 名称标记不同子晶格。','&KIND V_A\n ELEMENT V\n MAGNETIZATION 1.0\n&END KIND\n&KIND V_B\n ELEMENT V\n MAGNETIZATION -1.0\n&END KIND', ['MAGNETIZATION 1.0','MAGNETIZATION -1.0','ELEMENT V'], '把 V_A 和 V_B 当成两个化学元素。','每次 SCF 后检查最终局域人口/自旋，而不是只信初始 MAGNETIZATION。','AFM 初态是“标签 + 初始磁化”的明确构造。', 'kind'),
+C(21,'DFT+U：L、U_MINUS_J 与 U_RAMPING','会正确读 CP2K 的 +U 定义。','KIND/DFT_PLUS_U 对指定角动量壳层施加修正。L=2 对 d 轨道；U_MINUS_J 是有效 Ueff=U−J。U_RAMPING 可从较小 U 逐步增加到目标值，帮助困难 SCF。','&DFT_PLUS_U\n L 2\n U_MINUS_J [eV] 4.0\n U_RAMPING [eV] 0.5\n&END DFT_PLUS_U', ['L 2','U_MINUS_J [eV] 4.0','U_RAMPING [eV] 0.5'], '看到 VASP 用 U=4 eV，就在 CP2K 里不加验证直接写 4 eV。','+U 先明确投影方法、基组、赝势、结构与目标实验/参考，再校准。','CP2K +U 的数值必须在 CP2K 定义下重新验证。', 'plusu'),
+C(22,'为什么 VASP 的 U 不能直接搬到 CP2K','建立跨软件 U 参数的科学边界。','社区开发者明确提醒：文献中来自 VASP 的 U 可能需要为 CP2K 调整。原因包括局域轨道投影、基组、赝势和实现差异。相同“eV 数字”不保证相同物理修正。','VASP reference U → CP2K U scan → target observable / linear response', ['U_MINUS_J [eV] 3.0','U_MINUS_J [eV] 4.0','PLUS_U_METHOD LOWDIN'], '把 U 当成材料的绝对常数，与软件实现无关。','跨软件时把 U 当“方法的一部分”，重新做一元基准或线性响应。','U 是方法依赖参数，不是元素身份证号码。', 'forum_u','VASP Dudarev Ueff 与 CP2K U_MINUS_J 名称相近，但投影/基组实现不同，不能机械照搬。'),
+C(23,'KPOINTS 与方法兼容性：以 2026.2 为准','知道 k-point 支持已经变化，不能拿旧帖子当现行手册。','当前 CP2K 2026.2 文档明确：标准 diagonalization 支持 k-points；OT 仍不支持一般 k-point 路径；DFT+U 已在 2026.2 新增 k-point 支持，但目前限于 Mulliken populations。2025 年论坛中“DFT+U 不支持 k-points”的说法现在只应作为历史背景。','&KPOINTS\n SCHEME MONKHORST-PACK 4 4 1\n GAMMA_CENTERED\n&END KPOINTS', ['SCHEME MONKHORST-PACK 4 4 1','GAMMA_CENTERED','PLUS_U_METHOD MULLIKEN'], '引用旧论坛帖子后不再查当前 changelog/manual，导致把已经新增的 DFT+U+k-point 功能说成不存在。','任何“功能不支持”的结论都要先查你实际版本的 manual/changelog；论坛时间戳非常重要。','2026.2：OT+k-points 仍不支持；DFT+U+k-points 已有限支持（Mulliken）。', 'kpoints_methods'),
+C(24,'GEO_OPT：固定晶格优化','会把“只优化原子”与电子 SCF 精度联系起来。','RUN_TYPE GEO_OPT 固定 CELL，MOTION/GEO_OPT 控制优化器与力/位移收敛阈值。BFGS 默认适合中小体系，LBFGS 更适合大体系；每一步的力都依赖 SCF 质量。','&GLOBAL\n RUN_TYPE GEO_OPT\n&END GLOBAL\n&MOTION\n &GEO_OPT\n  OPTIMIZER BFGS\n &END GEO_OPT\n&END MOTION', ['RUN_TYPE GEO_OPT','OPTIMIZER BFGS','MAX_FORCE 4.5E-4'], '电子 SCF 每一步都没收敛，却继续讨论几何是否收敛。','先做单点 SCF 诊断，再上 GEO_OPT；优化不是 SCF 调参器。','GEO_OPT 优化坐标，晶格固定。', 'geo'),
+C(25,'CELL_OPT：晶格、应力与二维体系','理解 CELL_OPT 比 GEO_OPT 更苛刻。','RUN_TYPE CELL_OPT 同时更新坐标和晶胞，需要可靠 stress tensor。官方建议按问题设置 EXTERNAL_PRESSURE/约束；二维材料常需要约束真空方向，避免把真空层当成可压缩晶格。','RUN_TYPE CELL_OPT\nSTRESS_TENSOR ANALYTICAL\n&MOTION\n &CELL_OPT\n  CONSTRAINT Z\n &END CELL_OPT\n&END MOTION', ['RUN_TYPE CELL_OPT','STRESS_TENSOR ANALYTICAL','CONSTRAINT Z'], '二维 slab 做 CELL_OPT 时让 z 真空层一起自由塌缩。','CELL_OPT 前单独收敛 CUTOFF/REL_CUTOFF、SCF 和 stress；噪声会直接骗优化器。','CELL_OPT 是“原子 + 晶格 + 应力”的联合优化。', 'cellopt'),
+C(26,'Restart：WFN 与 EXT_RESTART 是两类东西','会安全继续中断任务。','波函数重启通常用 WFN_RESTART_FILE_NAME + SCF_GUESS RESTART；几何/MD 状态则可用 EXT_RESTART 读取 .restart 文件。二者恢复的状态不同。','WFN_RESTART_FILE_NAME old-RESTART.wfn\n&SCF\n SCF_GUESS RESTART\n&END SCF\n&EXT_RESTART\n RESTART_FILE_NAME old-1.restart\n&END EXT_RESTART', ['SCF_GUESS RESTART','WFN_RESTART_FILE_NAME old-RESTART.wfn','RESTART_FILE_NAME old-1.restart'], '拿一个旧 WFN 在基组、k点、泛函都变了的任务里硬读，然后把报错怪给 CP2K。','restart 前先比对方法、基组、k点、XC 和自旋设置。','WFN 重启电子态，EXT_RESTART 可恢复结构/动力学状态。', 'restart'),
+C(27,'输出阅读：从 SCF 到力、应力和优化收敛','会在输出里找“证据”而不是凭任务退出码判断。','CP2K 输出包含每个 SCF 的能量/收敛指标、优化步、力与可能的 stress。判断结果可信度要依次检查电子收敛、数值设置、力/应力和优化终止原因。','grep / tail / less + CP2K output literacy', ['EPS_SCF','MAX_FORCE','STRESS_TENSOR'], '只看到 PROGRAM ENDED AT 就宣布物理结果正确。','保留输入、主输出、restart、版本信息；每个阶段建立检查清单。','正常退出 ≠ 数值收敛 ≠ 物理正确。', 'scf'),
+C(28,'MPI/OpenMP/PBS：让 CP2K 在集群上正常跑','理解资源分配比“核越多越快”复杂。','CP2K 常见并行是 MPI ranks 与 OpenMP threads 组合。PBS 脚本要明确工作目录、可执行文件、线程环境和日志；性能需要按体系/版本测试，不靠拍脑袋。','export OMP_NUM_THREADS=2\nmpirun -np 14 cp2k.psmp -i run.inp -o run.out', ['export OMP_NUM_THREADS=2','mpirun -np 14 cp2k.psmp -i run.inp -o run.out','cd "$PBS_O_WORKDIR"'], '28 核就永远写 -np 28，不管 cp2k.psmp 的线程设置。','先小规模基准 MPI×OMP 组合，再批量生产。','HPC 参数是性能问题，不应和物理参数搅成一锅。', 'input_ref'),
+C(29,'真实排错：SCF 振荡、transition metals 与 CELL_OPT','把社区经验变成系统诊断树。','社区案例反复出现几类根因：结构不合理、金属占据处理错误、mixing 太激进、OT/SMEAR 不兼容、数值阈值过松导致 noisy force/stress。正确做法是先分类，再单变量测试。','结构 → 方法适用性 → SCF 算法 → 数值精度 → 力/应力 → 优化器', ['ALPHA 0.1','PRECONDITIONER FULL_ALL','EPS_SCF 1.0E-6'], '把所有“高级参数”一起加进输入，收敛了也不知道原因。','保留每轮输入 diff 和输出摘要，像做实验一样排错。','排错是证据链，不是参数许愿池。', 'forum_osc'),
+C(30,'VASP → CP2K 迁移与 MPS3 实战路线','把前 29 章变成可执行科研流程。','迁移时先复制“物理问题”，不是复制“参数数字”：结构/磁序/XC/目标性质保持可比；然后分别收敛 CP2K 的 basis、MGRID、SCF，再重新校准 +U。二元体系只有在一元基准稳定后才值得批量展开。','结构基准 → 单点 SCF → CUTOFF/REL_CUTOFF → basis → 磁态 → U scan → GEO_OPT → CELL_OPT → 二元', ['RUN_TYPE ENERGY','RUN_TYPE GEO_OPT','RUN_TYPE CELL_OPT'], '一上来直接算二元材料，然后遇到不收敛时同时怀疑结构、U、基组、网格和磁态。','把一元体系当“软件标定样品”，先建立 CP2K 自己的基准线。','迁移成功的标志是你理解每个差异来自哪里，而不是两个软件恰好给出相同数字。', 'forum_u','对应关系只能帮助导航：INCAR≈多个 section；POSCAR≈CELL+COORD；POTCAR≈KIND/POTENTIAL；ENCUT≠CUTOFF；EDIFF≈EPS_SCF 但不完全等价。')
+];
+
+const Q=(prompt,answer,sourceId,explanation,validator='exactish',meta={})=>({prompt,answers:Array.isArray(answer)?answer:[answer],sourceId,explanation,validator,meta});
+
+const bank={
+1:[Q('写出一个最小的 Quickstep 方法关键词。','METHOD QUICKSTEP','force_eval','METHOD 位于 FORCE_EVAL，用来选择 Quickstep。'),Q('写出 GPW 计算中常见的基组示例。','BASIS_SET DZVP-MOLOPT-GTH','basis','DZVP-MOLOPT-GTH 是常见 Gaussian 基组名称。'),Q('写出一个单点能量 RUN_TYPE。','RUN_TYPE ENERGY','input_ref','ENERGY 表示单点能量。'),Q('写出“能量+力”的 RUN_TYPE。','RUN_TYPE ENERGY_FORCE','input_ref','ENERGY_FORCE 同时请求力。'),Q('CP2K 轨道基组不是纯平面波。写出本章最关键的基组关键词。','BASIS_SET','basis','BASIS_SET 选择轨道 Gaussian 基组。'),Q('写出控制实空间最细网格的关键词名。','CUTOFF','mgrid','MGRID/CUTOFF 控制最细实空间网格。')],
+2:[Q('写一个完整 GLOBAL section，项目名 test。','&GLOBAL\n PROJECT test\n&END GLOBAL','input_ref','section 必须成对闭合。'),Q('显式用 Ry 写 CUTOFF 500。','CUTOFF [Ry] 500','mgrid','CP2K 支持显式单位。'),Q('显式用 eV 写 Ueff 4.0。','U_MINUS_J [eV] 4.0','plusu','U_MINUS_J 默认单位是 Hartree，显式 [eV] 更清楚。'),Q('写出 SCF section 的开闭结构。','&SCF\n&END SCF','scf','section 用 &SCF 开始、&END SCF 结束。'),Q('写出 DFT_PLUS_U section 的开闭结构。','&DFT_PLUS_U\n&END DFT_PLUS_U','plusu','+U 是 KIND 下的子节。'),Q('写一个注释行，说明这是 test。','! test','input_ref','CP2K 常用 ! 做注释。')],
+3:[Q('项目名设为 FePS3。','PROJECT FePS3','input_ref','PROJECT 决定输出前缀。'),Q('设置固定晶格几何优化。','RUN_TYPE GEO_OPT','geo','GEO_OPT 优化原子，晶格固定。'),Q('设置晶胞优化。','RUN_TYPE CELL_OPT','geo','CELL_OPT 联合优化晶格与坐标。'),Q('设置单点能量。','RUN_TYPE ENERGY','input_ref','ENERGY 是单点。'),Q('设置能量与力。','RUN_TYPE ENERGY_FORCE','input_ref','ENERGY_FORCE 可用于检查力。'),Q('在 GLOBAL 中同时写 PROJECT test 和 RUN_TYPE GEO_OPT。','&GLOBAL\n PROJECT test\n RUN_TYPE GEO_OPT\n&END GLOBAL','input_ref','这是最常见顶层结构。')],
+4:[Q('选择 Quickstep 作为 FORCE_EVAL 方法。','METHOD QUICKSTEP','force_eval','QUICKSTEP 是电子结构方法。'),Q('写出 QS 别名。','METHOD QS','force_eval','QS 是 QUICKSTEP 别名。'),Q('请求解析 stress tensor。','STRESS_TENSOR ANALYTICAL','force_eval','CELL_OPT 常需要应力。'),Q('写出最小 FORCE_EVAL section。','&FORCE_EVAL\n METHOD QUICKSTEP\n&END FORCE_EVAL','force_eval','METHOD 位于 FORCE_EVAL。'),Q('写出数值应力关键词。','STRESS_TENSOR NUMERICAL','force_eval','NUMERICAL 只有在解析应力不可用时考虑。'),Q('写出不计算应力。','STRESS_TENSOR NONE','force_eval','NONE 是默认。')],
+5:[Q('写出长度为 6,6,20 Å 的 ABC 晶胞行。','ABC 6.0 6.0 20.0','force_eval','CELL/ABC 用三个长度描述正交盒。'),Q('写出一个 V 原子笛卡尔坐标。','V 0.0 0.0 0.0','force_eval','COORD 可直接列元素/KIND 与坐标。'),Q('写 CELL section 包含 ABC 6 6 20。','&CELL\n ABC 6 6 20\n&END CELL','force_eval','CELL 负责晶格。'),Q('写 COORD section，放一个 S 原子在原点。','&COORD\n S 0 0 0\n&END COORD','force_eval','COORD 负责原子坐标。'),Q('写 SUBSYS 的开闭。','&SUBSYS\n&END SUBSYS','force_eval','SUBSYS 是体系容器。'),Q('用向量 A 写 x 方向 6 Å。','A 6.0 0.0 0.0','force_eval','非正交晶格常用 A/B/C 向量。')],
+6:[Q('把 KIND 命名为 V_up，但真实元素仍设为 V。','ELEMENT V','kind','ELEMENT 把自定义 KIND 映射回化学元素。'),Q('给 V_up 初始磁化 +1。','MAGNETIZATION 1.0','kind','MAGNETIZATION 是原子初始猜测。'),Q('给 V_dn 初始磁化 -1。','MAGNETIZATION -1.0','kind','负号可构造 AFM 初态。'),Q('写 V_up KIND 的最小磁性结构。','&KIND V_up\n ELEMENT V\n MAGNETIZATION 1.0\n&END KIND','kind','同元素可拆多个 KIND。'),Q('为 KIND 选择 DZVP-MOLOPT-GTH。','BASIS_SET DZVP-MOLOPT-GTH','kind','BASIS_SET 属于 KIND。'),Q('为 KIND 选择 GTH-PBE potential。','POTENTIAL GTH-PBE','kind','具体 potential 由 KIND 选取。')],
+7:[Q('选择 DZVP-MOLOPT-GTH 基组。','BASIS_SET DZVP-MOLOPT-GTH','basis','DZVP 是双ζ加极化。'),Q('选择 TZVP-MOLOPT-GTH 基组。','BASIS_SET TZVP-MOLOPT-GTH','basis','TZVP 更大，通常更贵。'),Q('指定 BASIS_MOLOPT 数据文件。','BASIS_SET_FILE_NAME BASIS_MOLOPT','basis','文件名在 DFT 层指定。'),Q('写一个 KIND O 使用 DZVP-MOLOPT-GTH。','&KIND O\n BASIS_SET DZVP-MOLOPT-GTH\n&END KIND','basis','基组按 KIND 选择。'),Q('基组从 DZVP 升到 TZVP，最该改哪个关键词？','BASIS_SET TZVP-MOLOPT-GTH','basis','不是改 CUTOFF。'),Q('写出基组选择关键词名。','BASIS_SET','basis','BASIS_SET 决定轨道展开。')],
+8:[Q('为氧写 GTH-PBE-q6。','POTENTIAL GTH-PBE-q6','pseudo','q6 表示显式处理 6 个价电子。'),Q('指定 GTH potential 库文件。','POTENTIAL_FILE_NAME GTH_POTENTIALS','pseudo','DFT 层指定库文件。'),Q('写出 KIND O 的 potential 行。','POTENTIAL GTH-PBE-q6','pseudo','KIND 内选具体条目。'),Q('写出 potential 选择关键词名。','POTENTIAL','pseudo','POTENTIAL 选具体赝势。'),Q('写出 potential 数据库关键词名。','POTENTIAL_FILE_NAME','pseudo','FILE_NAME 指搜索文件。'),Q('为 H 写常见 GTH-PBE-q1。','POTENTIAL GTH-PBE-q1','pseudo','H 通常 q1。')],
+9:[Q('写出 DFT 中两个数据文件名。','&DFT\n BASIS_SET_FILE_NAME BASIS_MOLOPT\n POTENTIAL_FILE_NAME GTH_POTENTIALS\n&END DFT','dft','文件搜索路径属于 DFT。'),Q('只写 basis 库关键词。','BASIS_SET_FILE_NAME BASIS_MOLOPT','basis','库文件和具体基组是两层。'),Q('只写 potential 库关键词。','POTENTIAL_FILE_NAME GTH_POTENTIALS','pseudo','库文件和具体 potential 是两层。'),Q('KIND 内写具体 basis。','BASIS_SET DZVP-MOLOPT-GTH','kind','具体条目位于 KIND。'),Q('KIND 内写具体 potential。','POTENTIAL GTH-PBE','kind','具体条目位于 KIND。'),Q('若文件不在默认路径，示例写绝对路径。','BASIS_SET_FILE_NAME /path/to/BASIS_MOLOPT','basis','文件名可包含路径。')],
+10:[Q('在 QS 中显式写 GPW。','&QS\n METHOD GPW\n&END QS','basis','GPW 是常见 Quickstep DFT 方法。'),Q('显式写 GAPW。','&QS\n METHOD GAPW\n&END QS','basis','GAPW 设置更复杂。'),Q('写出 Quickstep FORCE_EVAL 方法。','METHOD QUICKSTEP','force_eval','这是 FORCE_EVAL 层的方法选择。'),Q('写出 GPW 方法关键词行。','METHOD GPW','basis','在 QS 中。'),Q('写出 GAPW 方法关键词行。','METHOD GAPW','basis','在 QS 中。'),Q('写 QS section 开闭。','&QS\n&END QS','dft','QS 是 DFT 子节。')],
+11:[Q('设置 CUTOFF 500 Ry。','CUTOFF [Ry] 500','mgrid','CUTOFF 控制最细网格。'),Q('设置 REL_CUTOFF 60 Ry。','REL_CUTOFF [Ry] 60','mgrid','REL_CUTOFF 控制 Gaussian product 分配。'),Q('设置 4 层网格。','NGRIDS 4','mgrid','NGRIDS 是多重网格层数。'),Q('写完整 MGRID：CUTOFF 500, REL_CUTOFF 60。','&MGRID\n CUTOFF 500\n REL_CUTOFF 60\n&END MGRID','mgrid','两个参数应共同收敛。'),Q('把 CUTOFF 改到 600 Ry。','CUTOFF [Ry] 600','mgrid','扫描网格时单变量改动。'),Q('把 REL_CUTOFF 改到 80 Ry。','REL_CUTOFF [Ry] 80','mgrid','力/应力常对 REL_CUTOFF 敏感。')],
+12:[Q('设置 EPS_DEFAULT=1e-12。','EPS_DEFAULT 1.0E-12','forum_osc','EPS_DEFAULT 在 QS。'),Q('写完整 QS 包含 EPS_DEFAULT 1e-12。','&QS\n EPS_DEFAULT 1.0E-12\n&END QS','forum_osc','明确 section 位置。'),Q('把 EPS_DEFAULT 收紧到 1e-14。','EPS_DEFAULT 1.0E-14','forum_osc','更小通常更严格。'),Q('只写 QS section。','&QS\n&END QS','dft','QS 是数值设置的重要位置。'),Q('如果 SCF 振荡，不要只增加哪个参数？写关键词。','MAX_SCF','scf','MAX_SCF 只是迭代上限。'),Q('写出 SCF 阈值关键词。','EPS_SCF','scf','EPS_SCF 才是 SCF 目标阈值。')],
+13:[Q('写 PBE XC_FUNCTIONAL。','&XC_FUNCTIONAL PBE\n&END XC_FUNCTIONAL','dft','PBE 位于 XC_FUNCTIONAL。'),Q('写完整 XC 包含 PBE。','&XC\n &XC_FUNCTIONAL PBE\n &END XC_FUNCTIONAL\n&END XC','dft','XC 是 DFT 子节。'),Q('只写 XC section 开闭。','&XC\n&END XC','dft','泛函配置放这里。'),Q('写 PBE 关键词。','PBE','dft','PBE 是常见 GGA。'),Q('跨软件比较时最不该直接照搬的本章相关参数是什么？','U_MINUS_J','forum_u','U 依赖实现，需重新校准。'),Q('写出 CP2K 有效 U 关键词。','U_MINUS_J','plusu','Ueff=U−J。')],
+14:[Q('设置 EPS_SCF 1e-6。','EPS_SCF 1.0E-6','scf','EPS_SCF 是内层 SCF 目标。'),Q('设置 MAX_SCF 100。','MAX_SCF 100','scf','MAX_SCF 是上限，不是收敛标准。'),Q('写 SCF 同时含 EPS_SCF 1e-6 和 MAX_SCF 100。','&SCF\n EPS_SCF 1.0E-6\n MAX_SCF 100\n&END SCF','scf','常见基本设置。'),Q('要求从 atomic guess 开始。','SCF_GUESS ATOMIC','scf','ATOMIC 是初始猜测之一。'),Q('要求 restart guess。','SCF_GUESS RESTART','restart','RESTART 会尝试使用重启波函数。'),Q('写出“即使不收敛也继续”的危险关键词。','IGNORE_CONVERGENCE_FAILURE T','scf','这会让后续力可能无意义，应谨慎。')],
+15:[Q('写标准 diagonalization section。','&DIAGONALIZATION\n ALGORITHM STANDARD\n&END DIAGONALIZATION','forum_metal','金属常配合 diagonalization。'),Q('给每个 spin channel 增加 100 个轨道。','ADDED_MOS 100','scf','smearing 常需要额外轨道。'),Q('只写 ALGORITHM STANDARD。','ALGORITHM STANDARD','forum_metal','标准对角化算法。'),Q('写 DIAGONALIZATION 开闭。','&DIAGONALIZATION\n&END DIAGONALIZATION','scf','SCF 子节。'),Q('金属路线要用 smearing 时，OT 和 diagonalization 二选一，写更合适的方法 section。','&DIAGONALIZATION\n ALGORITHM STANDARD\n&END DIAGONALIZATION','forum_metal','常规 smearing 需要本征态。'),Q('写 CHOLESKY INVERSE。','CHOLESKY INVERSE','forum_metal','社区金属示例中常见，但不是万能设置。')],
+16:[Q('设置 mixing alpha 0.1。','ALPHA 0.1','mixing','降低 ALPHA 可抑制振荡。'),Q('选择 Broyden mixing。','METHOD BROYDEN_MIXING','mixing','Broyden 是常见 mixing。'),Q('选择 Kerker mixing。','METHOD KERKER_MIXING','forum_tm','Kerker 可缓解 charge sloshing。'),Q('写 MIXING section，Broyden + alpha 0.1。','&MIXING\n METHOD BROYDEN_MIXING\n ALPHA 0.1\n&END MIXING','mixing','仅 diagonalization 路线生效。'),Q('把 alpha 降到 0.05。','ALPHA 0.05','forum_tm','更保守。'),Q('OT 里是否该靠 MIXING 解决问题？用一个 section 表示正确选择。','&OT\n&END OT','mixing','OT 不使用普通 MIXING。')],
+17:[Q('写 OT：CG + FULL_ALL。','&OT\n MINIMIZER CG\n PRECONDITIONER FULL_ALL\n&END OT','ot','CG 更稳，FULL_ALL 常有效。'),Q('设置 OT 的 DIIS minimizer。','MINIMIZER DIIS','ot','DIIS 可快但较不稳。'),Q('设置 FULL_ALL preconditioner。','PRECONDITIONER FULL_ALL','ot','官方常推荐。'),Q('设置 ENERGY_GAP 0.001。','ENERGY_GAP 0.001','ot','FULL_ALL 需要 gap 估计。'),Q('写 OT section 且不要同时写 SMEAR。','&SCF\n &OT\n  MINIMIZER CG\n &END OT\n&END SCF','ot','普通 OT 与常规 smearing 不兼容。','forbidTogether',{required:['&OT'],forbiddenWithRequired:['&SMEAR']}),Q('困难体系更稳的 OT minimizer 是？','MINIMIZER CG','ot','CG 比 DIIS 更可靠。')],
+18:[Q('写 Fermi-Dirac smearing 300 K。','&SMEAR ON\n METHOD FERMI_DIRAC\n ELECTRONIC_TEMPERATURE [K] 300\n&END SMEAR','smear','Fermi-Dirac 用电子温度。'),Q('添加 200 个额外轨道。','ADDED_MOS 200','scf','部分占据需要足够未占据态。'),Q('写 Gaussian smearing sigma 0.2 eV。','&SMEAR ON\n METHOD GAUSSIAN\n SIGMA [eV] 0.2\n&END SMEAR','smear','显式单位可避免误解。'),Q('写 METHOD FERMI_DIRAC。','METHOD FERMI_DIRAC','smear','选择费米分布。'),Q('电子温度设 500 K。','ELECTRONIC_TEMPERATURE [K] 500','smear','更大温度可能改善收敛但改变有限温度自由能。'),Q('金属 diagonalization 路线同时写 ADDED_MOS 与 SMEAR。','&SCF\n ADDED_MOS 100\n &SMEAR ON\n  METHOD FERMI_DIRAC\n  ELECTRONIC_TEMPERATURE [K] 300\n &END SMEAR\n&END SCF','forum_diag','这是一条典型金属 SCF 结构。')],
+19:[Q('开启 UKS。','UKS T','dft','UKS 打开自旋极化。'),Q('设置 triplet 多重度。','MULTIPLICITY 3','dft','2S+1=3。'),Q('设置 singlet 多重度。','MULTIPLICITY 1','dft','总自旋 S=0。'),Q('写 DFT 中 UKS T。','&DFT\n UKS T\n&END DFT','dft','UKS 在 DFT 层。'),Q('给 KIND 初始磁化 2。','MAGNETIZATION 2.0','kind','这是 atomic guess。'),Q('写 MULTIPLICITY 5。','MULTIPLICITY 5','dft','quintet。')],
+20:[Q('V_A 初始 +1 磁矩。','&KIND V_A\n ELEMENT V\n MAGNETIZATION 1.0\n&END KIND','kind','自定义 KIND 可编码子晶格。'),Q('V_B 初始 -1 磁矩。','&KIND V_B\n ELEMENT V\n MAGNETIZATION -1.0\n&END KIND','kind','反向初态。'),Q('坐标中引用 V_A KIND。','V_A 0.0 0.0 0.0','kind','COORD 第一列可使用 KIND 名称。'),Q('写 V_A/V_B 两个 KIND 的磁化符号。','MAGNETIZATION 1.0\nMAGNETIZATION -1.0','kind','正负号对应两个子晶格。'),Q('V_A 的真实元素仍是什么？写完整行。','ELEMENT V','kind','KIND 名称不是元素。'),Q('若只写 UKS T，是否足够指定 AFM？写一个需要补充的关键词。','MAGNETIZATION','kind','还需局域初态。')],
+21:[Q('对 d 轨道施加 +U，写 L。','L 2','plusu','d 对应 l=2。'),Q('Ueff=4 eV。','U_MINUS_J [eV] 4.0','plusu','CP2K 直接支持 Ueff。'),Q('U 每次 ramp 0.5 eV。','U_RAMPING [eV] 0.5','plusu','逐步增加 U 可帮助 SCF。'),Q('写完整 DFT_PLUS_U：L2, Ueff4。','&DFT_PLUS_U\n L 2\n U_MINUS_J [eV] 4.0\n&END DFT_PLUS_U','plusu','+U 位于 KIND。'),Q('写 Ueff 别名对应的核心关键词。','U_MINUS_J','plusu','别名 U_EFF。'),Q('设置 EPS_U_RAMPING 1e-6。','EPS_U_RAMPING 1.0E-6','plusu','控制何时增加 U。')],
+22:[Q('把 VASP 的 4 eV U 直接照搬是否合理？写出 CP2K 中应扫描的关键词示例 3 eV。','U_MINUS_J [eV] 3.0','forum_u','跨软件应重新扫描/校准。'),Q('把 Ueff 扫描点写成 4 eV。','U_MINUS_J [eV] 4.0','forum_u','比较多个 U 点。'),Q('选择 Lowdin +U projector 方法。','PLUS_U_METHOD LOWDIN','dft','PLUS_U_METHOD 在 DFT 层选择投影。'),Q('选择 Mulliken +U projector。','PLUS_U_METHOD MULLIKEN','dft','默认是 Mulliken。'),Q('写 U ramp 0.1 eV。','U_RAMPING [eV] 0.1','plusu','可作为困难 SCF 工具。'),Q('写出 CP2K 有效 U 定义关键词而不是 VASP 的 LDAUU。','U_MINUS_J','forum_u','跨软件名称和实现不同。')],
+23:[Q('写 4×4×1 Monkhorst-Pack 网格。','SCHEME MONKHORST-PACK 4 4 1','kpoints','三维数量都要写。'),Q('请求 gamma-centered mesh。','GAMMA_CENTERED','kpoints','偶数网格时可移动以含 Γ。'),Q('只用 Gamma。','SCHEME GAMMA','kpoints','超胞常用。'),Q('写完整 KPOINTS 4×4×1。','&KPOINTS\n SCHEME MONKHORST-PACK 4 4 1\n&END KPOINTS','kpoints','KPOINTS 位于 DFT。'),Q('CP2K 2026.2 中 DFT+U 配合 k-points，目前应选择哪种 population 方法？','PLUS_U_METHOD MULLIKEN','changelog_2026','2026.2 新增 DFT+U+k-point 支持，但当前兼容表限定 Mulliken populations。'),Q('写出“全网格不做对称约简”开关。','FULL_GRID','kpoints','FULL_GRID 使用完整网格。')],
+24:[Q('设置固定晶格几何优化。','RUN_TYPE GEO_OPT','geo','只优化原子。'),Q('选择 BFGS。','OPTIMIZER BFGS','geoopt','默认常用。'),Q('大体系选择 LBFGS。','OPTIMIZER LBFGS','geoopt','内存更友好。'),Q('最大优化 200 步。','MAX_ITER 200','geoopt','优化步上限。'),Q('写最小 GEO_OPT motion。','&MOTION\n &GEO_OPT\n  OPTIMIZER BFGS\n &END GEO_OPT\n&END MOTION','geo','MOTION 控制几何更新。'),Q('最大力阈值示例 4.5e-4。','MAX_FORCE 4.5E-4','geoopt','单位默认为 Ha/Bohr。')],
+25:[Q('设置 CELL_OPT。','RUN_TYPE CELL_OPT','geo','同时优化晶格/坐标。'),Q('请求解析 stress。','STRESS_TENSOR ANALYTICAL','cellopt','更适合 CELL_OPT。'),Q('二维体系固定 z 晶格分量。','CONSTRAINT Z','cellopt','可避免真空层被优化。'),Q('写 CELL_OPT motion，固定 Z。','&MOTION\n &CELL_OPT\n  CONSTRAINT Z\n &END CELL_OPT\n&END MOTION','cellopt','二维体系常需约束真空方向。'),Q('选择 CELL_OPT 的 LBFGS。','OPTIMIZER LBFGS','cellopt','大体系可考虑。'),Q('外压设 1 bar 示例。','EXTERNAL_PRESSURE [bar] 1.0','geo','应明确目标压力。')],
+26:[Q('读取 old-RESTART.wfn。','WFN_RESTART_FILE_NAME old-RESTART.wfn','restart','DFT 层指定 WFN。'),Q('SCF 使用 restart guess。','SCF_GUESS RESTART','restart','与 WFN_RESTART_FILE_NAME 配合。'),Q('读取 old-1.restart。','RESTART_FILE_NAME old-1.restart','restart','EXT_RESTART 用 restart 文件。'),Q('写完整 EXT_RESTART。','&EXT_RESTART\n RESTART_FILE_NAME old-1.restart\n&END EXT_RESTART','restart','可恢复结构/动力学状态。'),Q('写 WFN 重启的两个关键设置。','WFN_RESTART_FILE_NAME old-RESTART.wfn\nSCF_GUESS RESTART','restart','电子态重启。'),Q('若基组/泛函/k点大改，最安全的 SCF_GUESS 是从头。写 ATOMIC。','SCF_GUESS ATOMIC','restart','不兼容 WFN 不应硬读。')],
+27:[Q('写出判断 SCF 收敛阈值的关键词。','EPS_SCF','scf','首先确认电子态。'),Q('写出 GEO_OPT 最大力阈值关键词。','MAX_FORCE','geoopt','优化终止依据之一。'),Q('写出请求应力的关键词。','STRESS_TENSOR ANALYTICAL','force_eval','CELL_OPT 需要。'),Q('写出最大 SCF 步数关键词。','MAX_SCF','scf','它不是收敛证明。'),Q('写出项目名前缀关键词。','PROJECT','input_ref','输出追踪靠 PROJECT。'),Q('写出能量+力 run type。','RUN_TYPE ENERGY_FORCE','input_ref','做正式优化前可检查初始力。')],
+28:[Q('设置 2 个 OpenMP 线程。','export OMP_NUM_THREADS=2','input_ref','psmp 通常使用 MPI+OpenMP。'),Q('14 个 MPI rank 跑 run.inp 输出 run.out。','mpirun -np 14 cp2k.psmp -i run.inp -o run.out','input_ref','典型启动命令。'),Q('PBS 中进入提交目录。','cd "$PBS_O_WORKDIR"','input_ref','避免跑错目录。'),Q('28 核，4 threads 时 MPI rank 数示例。','mpirun -np 7 cp2k.psmp -i run.inp -o run.out','input_ref','7×4=28，仅作资源组合示例。'),Q('写 OpenMP 线程环境变量 4。','export OMP_NUM_THREADS=4','input_ref','线程数需和 MPI 配套。'),Q('写 CP2K 输出文件参数。','-o run.out','input_ref','命令行 -o 指定输出。')],
+29:[Q('SCF 振荡时，把 mixing alpha 降到 0.1。','ALPHA 0.1','forum_osc','社区案例明确建议较小 ALPHA。'),Q('绝缘体困难 SCF 先试 OT FULL_ALL。','PRECONDITIONER FULL_ALL','forum_tm','OT 预条件关键。'),Q('金属体系用 Fermi smearing。','METHOD FERMI_DIRAC','forum_metal','部分占据处理。'),Q('CELL_OPT noisy forces 时先收紧 SCF 到 1e-6。','EPS_SCF 1.0E-6','forum_cell','SCF 过松会污染力/应力。'),Q('OT 与常规 SMEAR 不兼容。写一个不含 SMEAR 的 OT section。','&SCF\n &OT\n  MINIMIZER CG\n &END OT\n&END SCF','forum_osc','先选适用算法。','forbidTogether',{required:['&OT'],forbiddenWithRequired:['&SMEAR']}),Q('社区提醒：MD 前先保证哪个问题收敛？写关键词。','EPS_SCF','forum_md','电子结构不收敛，力就不可信。')],
+30:[Q('迁移第一步先做单点，写 RUN_TYPE。','RUN_TYPE ENERGY','forum_u','先验证电子结构。'),Q('一元结构只优化原子，写 RUN_TYPE。','RUN_TYPE GEO_OPT','geo','先固定晶格基准。'),Q('需要放松晶格时写 RUN_TYPE。','RUN_TYPE CELL_OPT','geo','在 stress/SCF 收敛后再做。'),Q('d 元素 +U 的壳层 L。','L 2','plusu','d=2。'),Q('MGRID 收敛的两个核心关键词。','CUTOFF\nREL_CUTOFF','mgrid','二者都应测试。'),Q('VASP U 不直接搬，CP2K 中先扫描的关键词。','U_MINUS_J','forum_u','从一元基准重新校准。')]
+};
+
+const difficulties=['beginner','beginner','intermediate','intermediate','advanced','advanced'];
+const exercises=[];
+for(const chapter of chapters){
+  const rows=bank[chapter.id]||[];
+  rows.forEach((row,j)=>{
+    exercises.push({
+      id:`c${String(chapter.id).padStart(2,'0')}-q${j+1}`,
+      chapterId:chapter.id,
+      prompt:row.prompt,
+      answers:row.answers,
+      sourceId:row.sourceId||chapter.sourceId,
+      explanation:row.explanation,
+      validator:row.validator,
+      meta:row.meta,
+      hint:`先定位它属于哪个 section。语法骨架：${chapter.anatomy.split('\n')[0]}`,
+      difficulty:difficulties[j]||'intermediate'
+    });
+  });
+}
+
+const vaspCp2kMap=[
+  ['INCAR','多个嵌套 section','CP2K 不存在一个单独参数文件容器。'],
+  ['POSCAR','&SUBSYS / &CELL + &COORD','结构可内嵌或从外部坐标文件读取。'],
+  ['POTCAR','POTENTIAL_FILE_NAME + KIND/POTENTIAL','同时还要单独选择 Gaussian BASIS_SET。'],
+  ['ENCUT','MGRID/CUTOFF（仅近似导航）','数值和物理意义不能直接照搬；轨道仍由 Gaussian basis 决定。'],
+  ['EDIFF','SCF/EPS_SCF（仅近似导航）','收敛量定义和算法不同。'],
+  ['ISPIN=2','DFT/UKS T','局域磁序还需 KIND/MAGNETIZATION。'],
+  ['MAGMOM','KIND/MAGNETIZATION','通常通过不同 KIND 编码不同子晶格初态。'],
+  ['LDAU(Ueff)','KIND/DFT_PLUS_U/U_MINUS_J','实现/投影不同，必须重新标定。'],
+  ['IBRION + ISIF','RUN_TYPE GEO_OPT / CELL_OPT + MOTION','CP2K 分成更显式的优化 section。'],
+  ['WAVECAR','*.wfn + SCF_GUESS RESTART','重启兼容性同样必须检查。']
+];
+
+const coverageAudit={
+  lastReviewed:'2026-08-25',
+  chapterCount:chapters.length,
+  exerciseCount:exercises.length,
+  scopeBoundary:'本课程不声称穷尽整个 CP2K Forum 或所有 CP2K 功能；它系统覆盖面向凝聚态 DFT、磁性、DFT+U、结构优化与 HPC 的主要学习/排错路径。',
+  claims:[
+    '30 个章节全部包含目标、概念、语法骨架、示例、常见错误、科研习惯和小结。',
+    '每章 6 道题，共 180 道；每题均有常驻标准答案、提示与解析。',
+    '核心定义优先依据 CP2K trunk Manual / Methods 文档，社区案例用于真实故障模式。',
+    '覆盖 GPW/GAPW、basis、GTH、MGRID、SCF、diagonalization、mixing、OT、smearing、UKS/AFM、DFT+U、k-points、GEO_OPT、CELL_OPT、restart、HPC 和 VASP→CP2K 迁移。',
+    '明确标注 VASP U 不能机械移植；按 CP2K 2026.2 更新兼容性：OT+k-points 仍不支持，DFT+U+k-points 已新增但限 Mulliken populations。'
+  ]
+};
+
+
+function stripComments(line='') {
+  let inSingle=false, inDouble=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==="'" && !inDouble) inSingle=!inSingle;
+    else if(c==='"' && !inSingle) inDouble=!inDouble;
+    else if((c==='!' || c==='#') && !inSingle && !inDouble) return line.slice(0,i);
+  }
+  return line;
+}
+
+function normalizeText(text='') {
+  return text
+    .replace(/\r/g,'')
+    .split('\n')
+    .map(stripComments)
+    .map(x=>x.trim().replace(/\s+/g,' '))
+    .filter(Boolean)
+    .map(x=>x.toUpperCase())
+    .join('\n');
+}
+
+function parseCp2kSections(text='') {
+  const stack=[];
+  const sections=new Set();
+  const keywords=new Map();
+  const normalized=normalizeText(text);
+  for(const line of normalized.split('\n').filter(Boolean)){
+    if(/^&END(?:\s+\S+)?$/.test(line)){
+      stack.pop();
+      continue;
+    }
+    if(line.startsWith('&')){
+      const name=line.slice(1).split(/\s+/)[0];
+      stack.push(name);
+      const path=stack.join('/');
+      sections.add(path);
+      if(!keywords.has(path)) keywords.set(path,new Map());
+      continue;
+    }
+    const path=stack.join('/');
+    if(!path) continue;
+    if(!keywords.has(path)) keywords.set(path,new Map());
+    const [key,...rest]=line.split(/\s+/);
+    keywords.get(path).set(key,rest.join(' '));
+  }
+  return {sections,keywords,normalized};
+}
+
+function containsNormalized(hay, needle){
+  return hay.includes(normalizeText(needle));
+}
+
+function exactish(input, answers=[]){
+  const n=normalizeText(input);
+  return answers.some(a=>normalizeText(a)===n);
+}
+
+function oneOf(input, answers=[]){ return exactish(input,answers); }
+
+function containsAll(input, required=[]){
+  const n=normalizeText(input);
+  return required.every(r=>containsNormalized(n,r));
+}
+
+function sectionContains(input, meta={}){
+  const parsed=parseCp2kSections(input);
+  const target=String(meta.section||'').toUpperCase();
+  if(!parsed.sections.has(target)) return false;
+  const block=parsed.keywords.get(target)||new Map();
+  return (meta.required||[]).every(item=>{
+    const n=normalizeText(item);
+    const [key,...rest]=n.split(/\s+/);
+    const expected=rest.join(' ');
+    if(!block.has(key)) return false;
+    return expected==='' || block.get(key)===expected;
+  });
+}
+
+function forbidTogether(input, meta={}){
+  const n=normalizeText(input);
+  const required=(meta.required||[]).every(x=>containsNormalized(n,x));
+  if(!required) return false;
+  return !(meta.forbiddenWithRequired||[]).some(x=>containsNormalized(n,x));
+}
+
+function checkAnswer(input, exercise={}) {
+  if(!String(input||'').trim()) return {empty:true,correct:false};
+  let correct=false;
+  switch(exercise.validator){
+    case 'containsAll': correct=containsAll(input,exercise.meta?.required||[]); break;
+    case 'sectionContains': correct=sectionContains(input,exercise.meta||{}); break;
+    case 'forbidTogether': correct=forbidTogether(input,exercise.meta||{}); break;
+    case 'oneOf': correct=oneOf(input,exercise.answers||[]); break;
+    case 'exactish':
+    default: correct=exactish(input,exercise.answers||[]); break;
+  }
+  return {empty:false,correct,reason:correct?'ok':'semantic'};
+}
+
+
+function initHero(canvas){
+  const ctx=canvas.getContext('2d');
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const staticMode=new URLSearchParams(location.search).has('static');
+  if(reduced || staticMode) return ()=>{};
+  let w=0,h=0,dpr=Math.min(devicePixelRatio||1,2),particles=[],pointer={x:-9999,y:-9999,active:false};
+  const off=document.createElement('canvas');
+  const octx=off.getContext('2d',{willReadFrequently:true});
+
+  function resize(){
+    w=innerWidth;h=innerHeight;
+    canvas.width=w*dpr;canvas.height=h*dpr;
+    canvas.style.width=w+'px';canvas.style.height=h+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    build();
+  }
+
+  function build(){
+    const ow=Math.min(1320,Math.max(700,w*.9));
+    const oh=Math.min(500,Math.max(300,h*.52));
+    off.width=ow;off.height=oh;octx.clearRect(0,0,ow,oh);
+    const size=Math.min(210,ow/6.2);
+    octx.textAlign='center';octx.textBaseline='middle';octx.fillStyle='#fff';
+    octx.font=`900 ${size}px Arial Black, Inter, sans-serif`;
+    octx.fillText('CP2K',ow/2,oh*.33);
+    octx.font=`800 ${size*.44}px Arial Black, Inter, sans-serif`;
+    octx.fillText('ACADEMY',ow/2,oh*.72);
+    const img=octx.getImageData(0,0,ow,oh).data;
+    particles=[];
+    const step=w<800?7:5;
+    const ox=(w-ow)/2,oy=(h-oh)/2-12;
+    for(let y=0;y<oh;y+=step){
+      for(let x=0;x<ow;x+=step){
+        if(img[(y*ow+x)*4+3]>160){
+          const px=ox+x,py=oy+y;
+          particles.push({x:px,y:py,ox:px,oy:py,vx:0,vy:0,s:Math.random()*1.35+.65,a:Math.random()*.42+.45});
+        }
+      }
+    }
+  }
+
+  function frame(t){
+    ctx.clearRect(0,0,w,h);
+    ctx.globalCompositeOperation='lighter';
+    for(const p of particles){
+      const dx=p.x-pointer.x,dy=p.y-pointer.y,dist=Math.hypot(dx,dy)||1;
+      if(pointer.active && dist<155){
+        const wave=1-dist/155;
+        const ripple=.58+.42*Math.sin(dist*.115-t*.02);
+        const f=wave*wave*2.05*ripple;
+        p.vx+=(dx/dist)*f;p.vy+=(dy/dist)*f;
+      }
+      p.vx+=(p.ox-p.x)*.0175;p.vy+=(p.oy-p.y)*.0175;
+      p.vx*=.905;p.vy*=.905;p.x+=p.vx;p.y+=p.vy;
+      ctx.beginPath();
+      ctx.fillStyle=`rgba(224,192,121,${p.a})`;
+      ctx.shadowColor='rgba(213,179,106,.3)';ctx.shadowBlur=8;
+      ctx.arc(p.x,p.y,p.s,0,Math.PI*2);ctx.fill();
+    }
+    ctx.shadowBlur=0;
+    requestAnimationFrame(frame);
+  }
+
+  function move(e){pointer.x=e.clientX;pointer.y=e.clientY;pointer.active=true;}
+  function leave(){pointer.active=false;}
+  addEventListener('resize',resize);
+  canvas.addEventListener('pointermove',move);
+  canvas.addEventListener('pointerleave',leave);
+  resize();requestAnimationFrame(frame);
+  return ()=>{removeEventListener('resize',resize);canvas.removeEventListener('pointermove',move);canvas.removeEventListener('pointerleave',leave)};
+}
+
+
+
+
+
+
+const $=s=>document.querySelector(s);
+const els={
+  hero:$('#hero'),workspace:$('#workspace'),nav:$('#chapterNav'),search:$('#chapterSearch'),title:$('#chapterTitle'),content:$('#chapterContent'),
+  input:$('#answerInput'),prompt:$('#questionPrompt'),qid:$('#questionId'),diff:$('#difficultyBadge'),verdict:$('#verdict'),feedback:$('#feedback'),source:$('#sourceDisclosure'),sourceBody:$('#sourceBody'),
+  refresh:$('#refreshQuestion'),check:$('#checkBtn'),hint:$('#hintBtn'),answer:$('#answerBtn'),explain:$('#explainBtn'),correct:$('#statCorrect'),streak:$('#statStreak'),accuracy:$('#statAccuracy'),progressRing:$('#progressRing'),progressPercent:$('#progressPercent'),progressText:$('#progressText'),
+  audit:$('#auditDialog'),auditBtn:$('#auditBtn'),closeAudit:$('#closeAudit'),auditContent:$('#auditContent'),burst:$('#burstLayer')
+};
+
+const storageKey='cma-cp2k-progress-v1';
+const legacyStorageKey='cp2k-academy-progress-v1';
+const savedText=localStorage.getItem(storageKey)||localStorage.getItem(legacyStorageKey)||'{}';
+const saved=JSON.parse(savedText);
+if(!localStorage.getItem(storageKey)&&localStorage.getItem(legacyStorageKey)){localStorage.setItem(storageKey,savedText);}
+const state={chapterId:Number(saved.chapterId)||1,currentId:null,stats:saved.stats||{},solved:new Set(saved.solved||[]),globalCorrect:saved.globalCorrect||0,globalAttempts:saved.globalAttempts||0,streak:saved.streak||0};
+
+function save(){localStorage.setItem(storageKey,JSON.stringify({chapterId:state.chapterId,stats:state.stats,solved:[...state.solved],globalCorrect:state.globalCorrect,globalAttempts:state.globalAttempts,streak:state.streak}));}
+function chapterExercises(id){return exercises.filter(e=>e.chapterId===id)}
+function currentExercise(){return exercises.find(e=>e.id===state.currentId)}
+function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function chapterStat(id){return state.stats[id]||{correct:0,attempts:0}}
+
+function renderNav(filter=''){
+  const q=filter.trim().toLowerCase();els.nav.innerHTML='';
+  for(const c of chapters){
+    const hay=(c.title+' '+c.goal+' '+c.anatomy+' '+c.examples.join(' ')).toLowerCase();if(q&&!hay.includes(q))continue;
+    const st=chapterStat(c.id),btn=document.createElement('button');btn.className='chapter-link'+(c.id===state.chapterId?' active':'');btn.type='button';
+    btn.innerHTML=`<span class="chapter-num">${String(c.id).padStart(2,'0')}</span><span class="chapter-label">${esc(c.title)}</span><span class="chapter-mini">${st.correct}/${chapterExercises(c.id).length}</span>`;
+    btn.addEventListener('click',()=>selectChapter(c.id));els.nav.appendChild(btn);
+  }
+}
+
+function renderChapter(){
+  const c=chapters.find(x=>x.id===state.chapterId),src=c.sourceId&&sources[c.sourceId];
+  els.title.textContent=`${String(c.id).padStart(2,'0')} · ${c.title}`;
+  const compare=c.vaspCompare?`<section class="lesson-card glass full"><h3>VASP ↔ CP2K · 迁移提醒</h3><p class="vasp-compare">${esc(c.vaspCompare)}</p></section>`:'';
+  const source=src?`<a class="source-chip" href="${src.url}" target="_blank" rel="noreferrer">${esc(src.type)} · ${esc(src.title)} ↗</a>`:'';
+  els.content.innerHTML=`
+    <section class="lesson-card glass full goal-card"><h3>Learning goal · 本章目标</h3><p>${esc(c.goal)}</p>${source}</section>
+    <section class="lesson-card glass full"><h3>Concept · 为什么</h3><p>${esc(c.concept)}</p></section>
+    <section class="lesson-card glass"><h3>Syntax anatomy · 语法骨架</h3><div class="code-block">${esc(c.anatomy)}</div></section>
+    <section class="lesson-card glass"><h3>Examples · 从参数到科研</h3><div class="example-list">${c.examples.map(x=>`<div class="example-item">${esc(x)}</div>`).join('')}</div></section>
+    <section class="lesson-card glass"><h3>Common mistake</h3><div class="callout danger"><div class="callout-icon">!</div><p>${esc(c.mistake)}</p></div></section>
+    <section class="lesson-card glass"><h3>Research habit</h3><div class="callout"><div class="callout-icon">✓</div><p>${esc(c.habit)}</p></div></section>
+    ${compare}
+    <section class="lesson-card glass full"><h3>Mini recap</h3><p>${esc(c.recap)}</p></section>`;
+  updateStats();
+}
+
+function selectChapter(id){state.chapterId=id;save();renderNav(els.search.value);renderChapter();pickQuestion();scrollTo({top:innerHeight+1,behavior:'smooth'});}
+function pickQuestion(forceDifferent=true){
+  const pool=chapterExercises(state.chapterId);let choices=pool;
+  if(forceDifferent&&pool.length>1)choices=pool.filter(e=>e.id!==state.currentId);
+  const ex=choices[Math.floor(Math.random()*choices.length)]||pool[0];state.currentId=ex.id;
+  els.input.value='';els.feedback.hidden=true;setVerdict('waiting');renderQuestion(ex);els.input.focus({preventScroll:true});
+}
+function renderQuestion(ex){
+  els.qid.textContent=`CH${String(ex.chapterId).padStart(2,'0')} / ${ex.id.split('-q')[1].padStart(2,'0')}`;els.prompt.textContent=ex.prompt;els.diff.textContent=ex.difficulty.toUpperCase();
+  const src=ex.sourceId&&sources[ex.sourceId];els.source.hidden=!src;
+  if(src){els.sourceBody.innerHTML=`<strong>${esc(src.type)}</strong> · ${esc(src.title)}<br><a href="${src.url}" target="_blank" rel="noreferrer">打开来源 ↗</a><p>本题按来源要点重新组织为教学问题，不复制社区长段原文。做完后建议点开原文确认上下文。</p>`;}
+}
+function setVerdict(kind){
+  els.verdict.className='verdict '+kind;
+  if(kind==='correct')els.verdict.innerHTML='<span>BINGO ✓</span><small>结构/语义正确，自动下一题</small>';
+  else if(kind==='wrong')els.verdict.innerHTML='<span>WRONG ×</span><small>题目保留，可以查看答案后继续改</small>';
+  else els.verdict.innerHTML='<span>WAITING</span><small>输入后按 Enter</small>';
+}
+function burst(){const r=els.verdict.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;for(let i=0;i<22;i++){const d=document.createElement('i');d.className='burst-dot';const a=Math.random()*Math.PI*2,dist=30+Math.random()*90;d.style.left=cx+'px';d.style.top=cy+'px';d.style.setProperty('--x',Math.cos(a)*dist+'px');d.style.setProperty('--y',Math.sin(a)*dist+'px');els.burst.appendChild(d);setTimeout(()=>d.remove(),760);}}
+function submit(){
+  const ex=currentExercise();if(!ex)return;const result=checkAnswer(els.input.value,ex);if(result.empty)return;
+  state.globalAttempts++;const st=state.stats[state.chapterId]||{correct:0,attempts:0};st.attempts++;state.stats[state.chapterId]=st;
+  if(result.correct){setVerdict('correct');state.globalCorrect++;state.streak++;st.correct++;state.solved.add(ex.id);els.feedback.hidden=true;burst();save();updateStats();setTimeout(()=>pickQuestion(),820);}
+  else{setVerdict('wrong');state.streak=0;els.feedback.hidden=false;els.feedback.textContent='结构或语义还不对。你可以直接点“查看答案”，对照 section 层级、关键词和值，然后修改自己的输入再提交。';save();updateStats();}
+}
+function updateStats(){
+  const st=chapterStat(state.chapterId),acc=st.attempts?Math.round(st.correct/st.attempts*100):0;els.correct.textContent=state.globalCorrect;els.streak.textContent=state.streak;els.accuracy.textContent=acc+'%';
+  const pct=Math.round(state.solved.size/exercises.length*100);els.progressRing.style.setProperty('--p',(pct*3.6)+'deg');els.progressPercent.textContent=pct+'%';els.progressText.textContent=`${state.solved.size} / ${exercises.length} 题答对`;renderNav(els.search.value);
+}
+function showHint(){const ex=currentExercise();els.feedback.hidden=false;els.feedback.innerHTML=`<strong>提示</strong><br>${esc(ex.hint)}`;}
+function showAnswer(){const ex=currentExercise();els.feedback.hidden=false;els.feedback.innerHTML=`<div class="answer-panel"><strong>标准答案 · 随时可看，不计错</strong><pre>${esc(ex.answers[0])}</pre></div>`;}
+function showExplanation(){const ex=currentExercise();els.feedback.hidden=false;els.feedback.innerHTML=`<strong>答案解析</strong><br>${esc(ex.explanation)}<div class="answer-panel"><pre>${esc(ex.answers[0])}</pre></div>`;}
+
+function renderAudit(){
+  const srcRows=Object.values(sources).map(s=>`<div class="source-row"><span><strong>${esc(s.type)}</strong><br>${esc(s.title)}</span><a href="${s.url}" target="_blank" rel="noreferrer">来源 ↗</a></div>`).join('');
+  const mapRows=vaspCp2kMap.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join('');
+  els.auditContent.innerHTML=`<div class="audit-grid"><div class="audit-metric"><strong>${coverageAudit.chapterCount}</strong><span>课程章节</span></div><div class="audit-metric"><strong>${coverageAudit.exerciseCount}</strong><span>训练题</span></div><div class="audit-metric"><strong>${coverageAudit.lastReviewed}</strong><span>内容复核日期</span></div></div><h3>Round 1 · 内容覆盖与正确性</h3><ul class="audit-list">${coverageAudit.claims.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><div class="scope-note">${esc(coverageAudit.scopeBoundary)}</div><h3>VASP → CP2K 导航表</h3><table class="compare-table"><thead><tr><th>VASP</th><th>CP2K</th><th>注意</th></tr></thead><tbody>${mapRows}</tbody></table><h3>Round 2 · 设计与功能检查</h3><ul class="audit-list"><li>Canvas 粒子：CP2K / ACADEMY 双行采样，鼠标水波排斥与弹簧回位。</li><li>首屏滚动：Hero 上移、模糊、渐隐；Workspace 渐显上滑。</li><li>练习：单题、随机刷新、BINGO 自动下一题、WRONG 保留题目。</li><li>答案：每题从一开始就可直接查看标准答案与解析，不需要先答错。</li><li>进度：localStorage 恢复、章节准确率、连续正确、总进度。</li><li>无障碍：Enter 提交、可见焦点、prefers-reduced-motion 降级。</li></ul><h3>Authoritative sources</h3><div class="source-list">${srcRows}</div>`;
+}
+function revealOnScroll(){const forced=new URLSearchParams(location.search).has('workspace');const y=scrollY,trigger=Math.min(innerHeight*.12,100);const visible=forced||y>trigger;els.hero.classList.toggle('scrolled',visible);els.workspace.classList.toggle('visible',visible);}
+
+els.search.addEventListener('input',e=>renderNav(e.target.value));
+els.refresh.addEventListener('click',()=>pickQuestion());els.check.addEventListener('click',submit);els.hint.addEventListener('click',showHint);els.answer.addEventListener('click',showAnswer);els.explain.addEventListener('click',showExplanation);
+els.input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submit();}});
+els.auditBtn.addEventListener('click',()=>{renderAudit();els.audit.showModal()});els.closeAudit.addEventListener('click',()=>els.audit.close());addEventListener('scroll',revealOnScroll,{passive:true});
+initHero($('#particleCanvas'));renderNav();renderChapter();pickQuestion(false);updateStats();revealOnScroll();
+
+</script>
+</body>
+</html>
