@@ -1,0 +1,9 @@
+{
+  "name": "cp2k-academy",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "build:single": "node build_single_file.mjs"
+  }
+}
